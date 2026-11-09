@@ -20,3 +20,21 @@ Java Swing으로 만드는 PC용 지뢰찾기 게임 프로젝트입니다.
 ## 실행 방법
 
 게임 구현 후 개발 환경과 실행 명령을 추가할 예정입니다.
+
+## 개발 환경
+
+- 프로젝트 기준 버전: Java 17
+- 확인된 로컬 JDK: Microsoft OpenJDK 17.0.16 (`C:\Users\dltnq\.jdks\ms-17.0.16`)
+- 현재 셸에는 JAVA_HOME과 Java 실행 경로가 설정되어 있지 않습니다.
+- Maven 명령은 현재 PATH에서 찾을 수 없습니다. Maven 프로젝트 구성 단계에서 실행 환경을 준비합니다.
+
+현재 PowerShell 세션에서 JDK를 사용하려면 다음과 같이 설정합니다.
+
+```powershell
+$env:JAVA_HOME = 'C:\Users\dltnq\.jdks\ms-17.0.16'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+java -version
+javac -version
+```
+
+작업 절차는 [CONTRIBUTING.md](CONTRIBUTING.md)를 따릅니다.
