@@ -19,7 +19,15 @@ Java Swing으로 만드는 PC용 지뢰찾기 게임 프로젝트입니다.
 
 ## 실행 방법
 
-게임 구현 후 개발 환경과 실행 명령을 추가할 예정입니다.
+JDK 17 이상이 필요합니다. 프로젝트 폴더의 PowerShell에서 실행합니다.
+
+```powershell
+.\mvnw.cmd clean verify
+java -jar target/minesweeper-1.0-SNAPSHOT.jar
+```
+
+macOS/Linux에서는 `./mvnw clean verify`로 빌드합니다.
+Maven은 Wrapper가 자동으로 내려받으므로 따로 설치하지 않아도 됩니다.
 
 ## 개발 환경
 
