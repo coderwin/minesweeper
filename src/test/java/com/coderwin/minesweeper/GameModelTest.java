@@ -8,6 +8,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class GameModelTest {
     private GameModel game() { return new GameModel(9, 9, 10, new Random(42)); }
 
+    @Test void allDifficultiesHaveExactMineCountsAndSafeStarts() {
+        for (Difficulty d : Difficulty.values()) for (int seed=0;seed<30;seed++) {
+            GameModel g=new GameModel(d.rows(),d.columns(),d.mines(),new Random(seed));
+            int row=seed%d.rows(), col=(seed*7)%d.columns();
+            g.reveal(row,col);
+            assertEquals(0,g.adjacentMines(row,col));
+            int count=0;
+            for(int r=0;r<g.rows();r++) for(int c=0;c<g.columns();c++) {
+                if(g.isMine(r,c)) count++;
+                assertFalse(g.isMine(r,c) && g.isRevealed(r,c));
+            }
+            assertEquals(d.mines(),count);
+        }
+    }
+
     @Test void everyCellCanBeASafeFirstClick() {
         for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) {
             GameModel g = game();
