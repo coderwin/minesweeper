@@ -19,7 +19,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public final class GamePanel extends JPanel {
-    private GameModel game = Difficulty.BEGINNER.newGame();
+    private GameModel game;
     private final JComboBox<Difficulty> difficulty = new JComboBox<>(Difficulty.values());
     private final JPanel board = new JPanel();
     private final JScrollPane boardScroll = new JScrollPane(board);
@@ -36,7 +36,12 @@ public final class GamePanel extends JPanel {
     private long startedAt;
 
     public GamePanel() {
+        this(Difficulty.BEGINNER.newGame());
+    }
+
+    GamePanel(GameModel initialGame) {
         super(new BorderLayout(0, 12));
+        game = initialGame;
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
         JButton restart = new JButton("새 게임");
