@@ -6,18 +6,28 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public final class GamePanel extends JPanel {
-    private GameModel game = new GameModel(9, 9, 10);
+    private GameModel game = Difficulty.BEGINNER.newGame();
+    private final JComboBox<Difficulty> difficulty = new JComboBox<>(Difficulty.values());
     private final JPanel board = new JPanel();
+    private final JScrollPane boardScroll = new JScrollPane(board);
+    private static final Color[] NUMBER_COLORS = {
+        Color.DARK_GRAY, new Color(35, 80, 185), new Color(25, 120, 65),
+        new Color(190, 40, 40), new Color(90, 45, 150), new Color(140, 60, 20),
+        new Color(15, 120, 135), Color.BLACK, Color.GRAY
+    };
     private final JLabel remaining = new JLabel();
     private final JLabel elapsed = new JLabel("시간: 0초");
     private final JLabel status = new JLabel();
@@ -37,9 +47,14 @@ public final class GamePanel extends JPanel {
         status.setName("status");
         toolbar.add(remaining);
         toolbar.add(elapsed);
+        difficulty.setName("difficulty");
+        difficulty.getAccessibleContext().setAccessibleName("난이도");
+        difficulty.addActionListener(e -> changeDifficulty());
+        toolbar.add(difficulty);
         toolbar.add(restart);
         add(toolbar, BorderLayout.NORTH);
-        add(board, BorderLayout.CENTER);
+        boardScroll.setBorder(BorderFactory.createEmptyBorder());
+        add(boardScroll, BorderLayout.CENTER);
         add(status, BorderLayout.SOUTH);
         timer = new Timer(200, e -> updateTime());
         buildBoard();
@@ -53,7 +68,7 @@ public final class GamePanel extends JPanel {
         for (int r = 0; r < game.rows(); r++) for (int c = 0; c < game.columns(); c++) {
             final int row = r;
             final int column = c;
-            JButton cell = new JButton();
+            JButton cell = new CellButton();
             cell.setName("cell-" + r + "-" + c);
             cell.setPreferredSize(new Dimension(38, 38));
             cell.setMargin(new java.awt.Insets(0, 0, 0, 0));
@@ -70,8 +85,22 @@ public final class GamePanel extends JPanel {
             cells[r][c] = cell;
             board.add(cell);
         }
+        int width = Math.max(510, Math.min(1220, game.columns() * 40));
+        int height = Math.min(660, game.rows() * 40);
+        boardScroll.setPreferredSize(new Dimension(width, height));
         board.revalidate();
         board.repaint();
+    }
+
+    private void changeDifficulty() {
+        game = ((Difficulty) difficulty.getSelectedItem()).newGame();
+        buildBoard();
+        newGame();
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null) {
+            window.pack();
+            window.setLocationRelativeTo(null);
+        }
     }
 
     private void openCell(int row, int column) {
@@ -116,6 +145,8 @@ public final class GamePanel extends JPanel {
             String text = showMine ? "*" : game.isFlagged(r, c) ? "F"
                     : open && game.adjacentMines(r, c) > 0 ? Integer.toString(game.adjacentMines(r, c)) : "";
             cell.setText(text);
+            cell.setForeground(showMine ? new Color(155, 20, 20) : game.isFlagged(r, c)
+                    ? new Color(160, 65, 10) : NUMBER_COLORS[game.adjacentMines(r, c)]);
             cell.setBackground(showMine ? new Color(255, 180, 180) : open ? new Color(230, 235, 240) : new Color(190, 205, 220));
             cell.setEnabled(!game.isFinished() && !open);
             String description = showMine ? "지뢰" : game.isFlagged(r, c) ? "깃발" : open ? "열림, 주변 지뢰 " + game.adjacentMines(r, c) : "닫힘";
@@ -126,5 +157,19 @@ public final class GamePanel extends JPanel {
     @Override public void removeNotify() {
         timer.stop();
         super.removeNotify();
+    }
+
+    /** Preserve number colors when revealed buttons are disabled. */
+    private static final class CellButton extends JButton {
+        CellButton() {
+            setUI(new javax.swing.plaf.basic.BasicButtonUI() {
+                @Override protected void paintText(java.awt.Graphics g, javax.swing.AbstractButton button,
+                        java.awt.Rectangle textRect, String text) {
+                    g.setColor(button.getForeground());
+                    javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt(g, text, -1,
+                            textRect.x, textRect.y + g.getFontMetrics().getAscent());
+                }
+            });
+        }
     }
 }
