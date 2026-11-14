@@ -69,6 +69,15 @@ javac -version
 
 ## 검증
 
+GitHub Actions는 `main` 대상 PR과 `main` 푸시마다 Java 17에서 빌드 및
+일반 테스트를 화면 없이 실행합니다. 실제 마우스를 사용하는 테스트는 CI에서 제외합니다.
+실행 결과와 테스트 보고서는 저장소의 Actions 탭에서 확인할 수 있습니다.
+로컬에서도 같은 조건으로 실행할 수 있습니다.
+
+```powershell
+.\mvnw.cmd clean verify '-Djava.awt.headless=true' '-Ddesktop.tests=false'
+```
+
 일반 빌드에는 게임 규칙 및 Swing 컴포넌트 테스트 12개가 포함됩니다.
 실제 창과 마우스를 사용하는 테스트는 다음과 같이 별도로 활성화합니다.
 
