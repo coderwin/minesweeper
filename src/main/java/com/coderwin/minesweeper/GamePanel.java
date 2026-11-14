@@ -110,7 +110,8 @@ public final class GamePanel extends JPanel {
 
     private void openCell(int row, int column) {
         GameModel.State before = game.state();
-        game.reveal(row, column);
+        if (game.isRevealed(row, column)) game.chord(row, column);
+        else game.reveal(row, column);
         if (before == GameModel.State.READY && game.state() != GameModel.State.READY) {
             startedAt = System.nanoTime();
             timer.start();
@@ -139,7 +140,7 @@ public final class GamePanel extends JPanel {
         remaining.setText("남은 지뢰: " + game.flagsRemaining());
         status.setText(switch (game.state()) {
             case READY -> "왼쪽 클릭: 열기 · 오른쪽 클릭: 깃발";
-            case PLAYING -> "지뢰가 없는 모든 칸을 열어 보세요.";
+            case PLAYING -> "숫자 클릭: 주변 칸 열기 · 오른쪽 클릭: 깃발";
             case WON -> "승리! 모든 안전한 칸을 열었습니다.";
             case LOST -> "패배! 지뢰를 밟았습니다. 새 게임으로 도전하세요.";
         });
@@ -153,7 +154,7 @@ public final class GamePanel extends JPanel {
             cell.setForeground(showMine ? new Color(155, 20, 20) : game.isFlagged(r, c)
                     ? new Color(160, 65, 10) : NUMBER_COLORS[game.adjacentMines(r, c)]);
             cell.setBackground(showMine ? new Color(255, 180, 180) : open ? new Color(230, 235, 240) : new Color(190, 205, 220));
-            cell.setEnabled(!game.isFinished() && !open);
+            cell.setEnabled(!game.isFinished() && (!open || game.adjacentMines(r, c) > 0));
             String description = showMine ? "지뢰" : game.isFlagged(r, c) ? "깃발" : open ? "열림, 주변 지뢰 " + game.adjacentMines(r, c) : "닫힘";
             cell.getAccessibleContext().setAccessibleName((r + 1) + "행 " + (c + 1) + "열 " + description);
         }
