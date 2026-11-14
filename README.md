@@ -79,6 +79,27 @@ java -version
 javac -version
 ```
 
+## Windows 배포본
+
+Windows x64에서 JDK 17의 `jpackage`로 런타임을 포함한 앱 폴더와 ZIP을 만듭니다.
+개발 PC에는 `JAVA_HOME` 설정이 필요하지만 배포본 사용자는 별도 Java 설치가 필요 없습니다.
+Maven 빌드·테스트에 성공한 뒤 앱을 패키징합니다. MSI 설치 파일을 만들지 않으므로 WiX는 필요하지 않습니다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Package-Windows.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Verify-WindowsPackage.ps1
+```
+
+- 앱: `target/windows/Minesweeper/Minesweeper.exe`
+- 배포 ZIP: `target/Minesweeper-windows-x64.zip`
+- 검증 환경: Windows 빌드 26200, x64, Microsoft OpenJDK 17.0.16
+
+ZIP을 원하는 폴더에 전부 풀고 `Minesweeper.exe`를 실행합니다.
+`runtime`과 `app` 폴더도 함께 필요하므로 EXE만 따로 옮기지 마세요.
+최고 기록은 앱 폴더가 아닌 사용자 홈에 저장합니다. 배포본에는 개발 소스와 테스트를 넣지 않습니다.
+검증 스크립트는 `JAVA_HOME`과 PATH에서 외부 Java를 제외하고 포함 런타임으로 기능과 기록 복원을 확인합니다.
+생성 파일은 `target` 아래에 있으며 Git에는 포함하지 않습니다. 공개 릴리스 게시는 별도 작업입니다.
+
 ## 검증
 
 GitHub Actions는 `main` 대상 PR과 `main` 푸시마다 Java 17에서 빌드 및
