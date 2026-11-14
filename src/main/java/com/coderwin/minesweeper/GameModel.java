@@ -77,6 +77,30 @@ public final class GameModel {
         if (revealedCount == rows * columns - mineCount) state = State.WON;
     }
 
+    /** Open unflagged neighbors of a revealed number when its flag count matches. */
+    public void chord(int row, int column) {
+        checkBounds(row, column);
+        if (isFinished() || !revealed[row][column] || adjacent[row][column] == 0) return;
+        List<Integer> neighbors = new ArrayList<>();
+        int flags = 0;
+        for (int r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
+            for (int c = Math.max(0, column - 1); c <= Math.min(columns - 1, column + 1); c++) {
+                if (r == row && c == column) continue;
+                if (flagged[r][c]) flags++;
+                else if (!revealed[r][c]) neighbors.add(r * columns + c);
+            }
+        }
+        if (flags != adjacent[row][column]) return;
+        // A misplaced flag must lose even if other neighbors complete the safe cells.
+        for (int cell : neighbors) {
+            if (mines[cell / columns][cell % columns]) {
+                reveal(cell / columns, cell % columns);
+                return;
+            }
+        }
+        for (int cell : neighbors) reveal(cell / columns, cell % columns);
+    }
+
     private void open(int row, int column, ArrayDeque<Integer> queue) {
         revealed[row][column] = true;
         revealedCount++;
