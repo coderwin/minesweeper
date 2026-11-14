@@ -57,13 +57,13 @@
 
 ## 6. GitHub Actions 자동 검증
 
-예정 브랜치: `ci/<이슈번호>-maven-verify`
+작업 브랜치: `ci/19-maven-verify` · 이슈 #19 · PR #20
 
-- [ ] main 대상 PR 및 main 푸시에 Java 17 Maven 빌드·테스트 실행
-- [ ] 실제 창과 마우스가 필요한 데스크톱 테스트를 기본 CI에서 제외
-- [ ] 일반 게임 로직 및 Swing 컴포넌트 테스트를 화면 없이 실행
-- [ ] GitHub Actions 실행 성공과 테스트 결과 확인
-- [ ] README에 자동 검증 및 로컬 테스트 방법 반영
+- [x] main 대상 PR 및 main 푸시에 Java 17 Maven 빌드·테스트 실행
+- [x] 실제 창과 마우스가 필요한 데스크톱 테스트를 기본 CI에서 제외
+- [x] 일반 게임 로직 및 Swing 컴포넌트 테스트를 화면 없이 실행
+- [x] GitHub Actions 실행 성공과 테스트 결과 확인
+- [x] README에 자동 검증 및 로컬 테스트 방법 반영
 
 ## 7. 주변 칸 한 번에 열기
 
