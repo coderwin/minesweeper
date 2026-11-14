@@ -31,17 +31,27 @@ public final class GamePanel extends JPanel {
     private final JLabel remaining = new JLabel();
     private final JLabel elapsed = new JLabel("시간: 0초");
     private final JLabel status = new JLabel();
+    private final JLabel bestTime = new JLabel();
+    private final JLabel recordNotice = new JLabel();
+    private final BestTimesStore records;
+    private final java.util.function.LongSupplier clock;
     private final Timer timer;
     private JButton[][] cells;
     private long startedAt;
 
     public GamePanel() {
-        this(Difficulty.BEGINNER.newGame());
+        this(Difficulty.BEGINNER.newGame(), BestTimesStore.userDefault(), System::nanoTime);
     }
 
     GamePanel(GameModel initialGame) {
+        this(initialGame, BestTimesStore.inMemory(), System::nanoTime);
+    }
+
+    GamePanel(GameModel initialGame, BestTimesStore records, java.util.function.LongSupplier clock) {
         super(new BorderLayout(0, 12));
         game = initialGame;
+        this.records = records;
+        this.clock = clock;
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
         JButton restart = new JButton("새 게임");
@@ -60,7 +70,13 @@ public final class GamePanel extends JPanel {
         add(toolbar, BorderLayout.NORTH);
         boardScroll.setBorder(BorderFactory.createEmptyBorder());
         add(boardScroll, BorderLayout.CENTER);
-        add(status, BorderLayout.SOUTH);
+        bestTime.setName("best-time");
+        recordNotice.setName("record-notice");
+        JPanel footer = new JPanel(new GridLayout(0, 1, 0, 4));
+        footer.add(status);
+        footer.add(bestTime);
+        footer.add(recordNotice);
+        add(footer, BorderLayout.SOUTH);
         timer = new Timer(200, e -> updateTime());
         buildBoard();
         render();
@@ -113,12 +129,15 @@ public final class GamePanel extends JPanel {
         if (game.isRevealed(row, column)) game.chord(row, column);
         else game.reveal(row, column);
         if (before == GameModel.State.READY && game.state() != GameModel.State.READY) {
-            startedAt = System.nanoTime();
+            startedAt = clock.getAsLong();
             timer.start();
         }
         if (game.isFinished()) {
             updateTime();
             timer.stop();
+            if (before != GameModel.State.WON && game.state() == GameModel.State.WON) {
+                records.record((Difficulty) difficulty.getSelectedItem(), elapsedMillis());
+            }
         }
         render();
     }
@@ -132,12 +151,20 @@ public final class GamePanel extends JPanel {
     }
 
     private void updateTime() {
-        long seconds = startedAt == 0 ? 0 : (System.nanoTime() - startedAt) / 1_000_000_000L;
+        long seconds = elapsedMillis() / 1000;
         elapsed.setText("시간: " + seconds + "초");
+    }
+
+    private long elapsedMillis() {
+        return game.state() == GameModel.State.READY ? 0 : Math.max(0, (clock.getAsLong() - startedAt) / 1_000_000L);
     }
 
     private void render() {
         remaining.setText("남은 지뢰: " + game.flagsRemaining());
+        java.util.OptionalLong best = records.best((Difficulty) difficulty.getSelectedItem());
+        bestTime.setText("최고 기록: " + (best.isPresent()
+                ? String.format(java.util.Locale.ROOT, "%.3f초", best.getAsLong() / 1000.0) : "없음"));
+        recordNotice.setText(records.warning());
         status.setText(switch (game.state()) {
             case READY -> "왼쪽 클릭: 열기 · 오른쪽 클릭: 깃발";
             case PLAYING -> "숫자 클릭: 주변 칸 열기 · 오른쪽 클릭: 깃발";
