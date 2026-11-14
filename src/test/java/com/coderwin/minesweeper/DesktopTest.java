@@ -56,7 +56,7 @@ class DesktopTest {
         try {
             SwingUtilities.invokeAndWait(()->{
                 frame[0]=new JFrame("지뢰찾기 검증");
-                panel[0]=new GamePanel();
+                panel[0]=new GamePanel(new GameModel(9,9,10,new java.util.Random(42)));
                 frame[0].setContentPane(panel[0]);
                 frame[0].setAlwaysOnTop(true);
                 frame[0].pack();
