@@ -74,6 +74,14 @@ public final class PackageSmoke {
                     ((JButton)named(panel,"restart")).doClick();
                     require(cell(panel,0,0).isEnabled() && cell(panel,0,0).getText().isEmpty(),"New board");
                 }
+                BoardSettings custom=new BoardSettings(3,4,3);
+                panel.applyCustomSettings(custom);
+                cell(panel,1,1).doClick();
+                require(records.best(custom.recordKey()).orElse(-1)==0,"Custom board record");
+                panel.applyCustomSettings(new BoardSettings(30,40,200));
+                require(cell(panel,29,39)!=null,"Large custom board");
+                ((JButton)named(panel,"restart")).doClick();
+                require(cell(panel,29,39)!=null,"Custom restart preserves dimensions");
             });
             System.out.println("Packaged runtime: input, restart, difficulty, win and persistence passed");
         } finally {
