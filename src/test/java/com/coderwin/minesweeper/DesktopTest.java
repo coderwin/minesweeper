@@ -77,9 +77,15 @@ class DesktopTest {
             robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
             robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
             robot.waitForIdle();
-            SwingUtilities.invokeAndWait(()->assertEquals("F",GamePanelTest.cell(panel[0],0,0).getText()));
+            SwingUtilities.invokeAndWait(()->assertNotNull(GamePanelTest.cell(panel[0],0,0).getIcon()));
             robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
             robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
+            robot.keyPress(java.awt.event.KeyEvent.VK_F); robot.keyRelease(java.awt.event.KeyEvent.VK_F);
+            robot.waitForIdle();
+            SwingUtilities.invokeAndWait(()->assertNotNull(GamePanelTest.cell(panel[0],0,0).getIcon()));
+            robot.keyPress(java.awt.event.KeyEvent.VK_F); robot.keyRelease(java.awt.event.KeyEvent.VK_F);
+            robot.waitForIdle();
+            SwingUtilities.invokeAndWait(()->assertNull(GamePanelTest.cell(panel[0],0,0).getIcon()));
             robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
             robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
             robot.waitForIdle();
