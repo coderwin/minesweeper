@@ -104,15 +104,15 @@
 
 ## 10. Windows 패키징 자동화
 
-예정 브랜치: `ci/<이슈번호>-windows-package`
+작업 브랜치: `ci/29-windows-package` · 이슈 #29 · PR #30
 
-- [ ] Windows runner에서 기존 패키징 스크립트를 실행하는 GitHub Actions 구성
-- [ ] main 대상 PR, main 푸시 및 수동 실행의 동작과 권한 설정
-- [ ] headless 테스트와 런타임 포함 앱·ZIP 생성 자동 실행
-- [ ] 포함 런타임 실행·기록 복원·ZIP 내용 검증을 CI에 연결하고 실제 마우스 테스트와 분리
-- [ ] 배포 ZIP 및 검증 보고서를 Actions artifact로 보관
-- [ ] GitHub 실행 성공과 다운로드한 ZIP의 실행 확인
-- [ ] README에 자동 패키징과 artifact 다운로드 방법 작성
+- [x] Windows runner에서 기존 패키징 스크립트를 실행하는 GitHub Actions 구성
+- [x] main 대상 PR, main 푸시 및 수동 실행의 동작과 권한 설정
+- [x] headless 테스트와 런타임 포함 앱·ZIP 생성 자동 실행
+- [x] 포함 런타임 실행·기록 복원·ZIP 내용 검증을 CI에 연결하고 실제 마우스 테스트와 분리
+- [x] 배포 ZIP 및 검증 보고서를 Actions artifact로 보관
+- [x] GitHub 실행 성공과 다운로드한 ZIP의 실행 확인
+- [x] README에 자동 패키징과 artifact 다운로드 방법 작성
 
 ## 11. 첫 GitHub Release 배포
 

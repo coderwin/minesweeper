@@ -1,8 +1,14 @@
-param()
+param([string]$ArchivePath)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $application = Join-Path $projectRoot 'target\windows\Minesweeper'
+if ($ArchivePath) {
+    $ArchivePath = (Resolve-Path -LiteralPath $ArchivePath).Path
+    $unpacked = Join-Path $projectRoot ('target\download-check-' + [guid]::NewGuid().ToString('N'))
+    Expand-Archive -LiteralPath $ArchivePath -DestinationPath $unpacked
+    $application = Join-Path $unpacked 'Minesweeper'
+}
 $runtimeJava = Join-Path $application 'runtime\bin\java.exe'
 $applicationJar = Join-Path $application 'app\minesweeper-1.0-SNAPSHOT.jar'
 $classes = Join-Path $projectRoot 'target\package-smoke-classes'
@@ -52,8 +58,10 @@ try {
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$archive = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'target') -Filter 'Minesweeper-windows-*.zip' | Select-Object -First 1
-$zip = [IO.Compression.ZipFile]::OpenRead($archive.FullName)
+$archive = if ($ArchivePath) { $ArchivePath } else {
+    (Get-ChildItem -LiteralPath (Join-Path $projectRoot 'target') -Filter 'Minesweeper-windows-*.zip' | Select-Object -First 1).FullName
+}
+$zip = [IO.Compression.ZipFile]::OpenRead($archive)
 try {
     $unexpected = $zip.Entries | Where-Object { $_.FullName.Replace('\','/') -match '(^|/)(src|\.git|\.tools|target|scripts)/|\.(java|iml)$' }
     if ($unexpected) { throw 'Archive contains development files.' }
