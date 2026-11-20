@@ -25,7 +25,7 @@ JDK 17 이상과 그래픽 데스크톱 환경이 필요합니다. 아래 개발
 
 ```powershell
 .\mvnw.cmd clean verify
-java -jar target/minesweeper-1.0-SNAPSHOT.jar
+java -jar target/minesweeper-1.0.0.jar
 ```
 
 macOS/Linux에서는 `./mvnw clean verify`로 빌드합니다.

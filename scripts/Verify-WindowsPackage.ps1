@@ -10,7 +10,9 @@ if ($ArchivePath) {
     $application = Join-Path $unpacked 'Minesweeper'
 }
 $runtimeJava = Join-Path $application 'runtime\bin\java.exe'
-$applicationJar = Join-Path $application 'app\minesweeper-1.0-SNAPSHOT.jar'
+$jars = @(Get-ChildItem -LiteralPath (Join-Path $application 'app') -Filter 'minesweeper-*.jar')
+if ($jars.Count -ne 1) { throw 'Expected exactly one application JAR.' }
+$applicationJar = $jars[0].FullName
 $classes = Join-Path $projectRoot 'target\package-smoke-classes'
 $recordsDirectory = Join-Path $projectRoot ('target\package-smoke-' + [guid]::NewGuid().ToString('N'))
 $jdkCompiler = Join-Path $env:JAVA_HOME 'bin\javac.exe'
