@@ -81,6 +81,12 @@ javac -version
 
 ## Windows 배포본
 
+GitHub Actions의 **Windows package** 워크플로는 main 대상 PR과 main 푸시에서
+테스트·패키징·ZIP 압축 해제 후 포함 런타임 검증을 실행합니다. Actions 탭에서
+성공한 실행의 `windows-x64-package` artifact를 내려받으면 배포 ZIP이 들어 있습니다.
+`windows-verification-reports`에는 테스트 및 패키지 검증 결과가 있습니다.
+수동 실행도 가능하며 실제 마우스를 움직이는 데스크톱 테스트는 실행하지 않습니다.
+
 Windows x64에서 JDK 17의 `jpackage`로 런타임을 포함한 앱 폴더와 ZIP을 만듭니다.
 개발 PC에는 `JAVA_HOME` 설정이 필요하지만 배포본 사용자는 별도 Java 설치가 필요 없습니다.
 Maven 빌드·테스트에 성공한 뒤 앱을 패키징합니다. MSI 설치 파일을 만들지 않으므로 WiX는 필요하지 않습니다.
