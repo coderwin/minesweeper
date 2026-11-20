@@ -7,14 +7,15 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Properties;
 
 /** Millisecond records; disk failures retain session records without interrupting play. */
 public final class BestTimesStore {
     private final Path file;
-    private final EnumMap<Difficulty, Long> times = new EnumMap<>(Difficulty.class);
+    private final Map<String, Long> times = new HashMap<>();
     private String warning = "";
 
     public BestTimesStore(Path file) {
@@ -37,16 +38,25 @@ public final class BestTimesStore {
     }
 
     public OptionalLong best(Difficulty difficulty) {
-        Long value = times.get(difficulty);
+        return best(difficulty.name());
+    }
+
+    public OptionalLong best(String key) {
+        Long value = times.get(key);
         return value == null ? OptionalLong.empty() : OptionalLong.of(value);
     }
 
     public String warning() { return warning; }
 
     public boolean record(Difficulty difficulty, long millis) {
+        return record(difficulty.name(),millis);
+    }
+
+    public boolean record(String key,long millis) {
+        if(!validKey(key)) throw new IllegalArgumentException("Unknown board record key");
         if (millis < 0) throw new IllegalArgumentException("Negative time");
-        if (best(difficulty).isPresent() && best(difficulty).getAsLong() <= millis) return false;
-        times.put(difficulty, millis);
+        if (best(key).isPresent() && best(key).getAsLong() <= millis) return false;
+        times.put(key, millis);
         save();
         return true;
     }
@@ -56,13 +66,13 @@ public final class BestTimesStore {
         Properties properties = new Properties();
         try (InputStream stream = Files.newInputStream(file)) {
             properties.load(stream);
-            for (Difficulty difficulty : Difficulty.values()) {
-                String value = properties.getProperty(difficulty.name());
-                if (value == null) continue;
+            for (String key : properties.stringPropertyNames()) {
+                if(!validKey(key)) continue;
+                String value = properties.getProperty(key);
                 try {
                     long millis = Long.parseLong(value);
                     if (millis < 0) throw new NumberFormatException();
-                    times.put(difficulty, millis);
+                    times.put(key, millis);
                 } catch (NumberFormatException ex) {
                     warning = "일부 기록이 손상되어 해당 기록을 제외했습니다.";
                 }
@@ -74,6 +84,12 @@ public final class BestTimesStore {
         }
     }
 
+    private static boolean validKey(String key) {
+        if(key==null) return false;
+        try { Difficulty.valueOf(key); return true; }
+        catch(IllegalArgumentException ex) { return BoardSettings.isRecordKey(key); }
+    }
+
     private void save() {
         if (file == null) return;
         Path temporary = null;
@@ -81,7 +97,7 @@ public final class BestTimesStore {
             Files.createDirectories(file.getParent());
             temporary = Files.createTempFile(file.getParent(), "best-times-", ".tmp");
             Properties properties = new Properties();
-            times.forEach((difficulty, millis) -> properties.setProperty(difficulty.name(), millis.toString()));
+            times.forEach((key, millis) -> properties.setProperty(key, millis.toString()));
             try (OutputStream stream = Files.newOutputStream(temporary)) {
                 properties.store(stream, "Minesweeper best times in milliseconds");
             }

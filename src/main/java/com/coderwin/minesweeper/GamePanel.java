@@ -20,7 +20,12 @@ import javax.swing.Timer;
 
 public final class GamePanel extends JPanel {
     private GameModel game;
-    private final JComboBox<Difficulty> difficulty = new JComboBox<>(Difficulty.values());
+    static final String CUSTOM_CHOICE="사용자 지정…";
+    private final JComboBox<Object> difficulty = new JComboBox<>(Difficulty.values());
+    private Difficulty activeDifficulty=Difficulty.BEGINNER;
+    private BoardSettings customSettings;
+    private boolean changingSelection;
+    private final java.util.function.Supplier<BoardSettings> customPrompt;
     private final JPanel board = new JPanel();
     private final JScrollPane boardScroll = new JScrollPane(board);
     private static final Color[] NUMBER_COLORS = {
@@ -48,10 +53,16 @@ public final class GamePanel extends JPanel {
     }
 
     GamePanel(GameModel initialGame, BestTimesStore records, java.util.function.LongSupplier clock) {
+        this(initialGame,records,clock,null);
+    }
+
+    GamePanel(GameModel initialGame, BestTimesStore records, java.util.function.LongSupplier clock,
+            java.util.function.Supplier<BoardSettings> customPrompt) {
         super(new BorderLayout(0, 12));
         game = initialGame;
         this.records = records;
         this.clock = clock;
+        this.customPrompt = customPrompt == null ? this::promptCustomSettings : customPrompt;
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
         JButton restart = new JButton("새 게임");
@@ -63,12 +74,14 @@ public final class GamePanel extends JPanel {
         toolbar.add(remaining);
         toolbar.add(elapsed);
         difficulty.setName("difficulty");
+        difficulty.addItem(CUSTOM_CHOICE);
         difficulty.getAccessibleContext().setAccessibleName("난이도");
         difficulty.addActionListener(e -> changeDifficulty());
         toolbar.add(difficulty);
         toolbar.add(restart);
         add(toolbar, BorderLayout.NORTH);
         boardScroll.setBorder(BorderFactory.createEmptyBorder());
+        boardScroll.setName("board-scroll");
         add(boardScroll, BorderLayout.CENTER);
         bestTime.setName("best-time");
         recordNotice.setName("record-notice");
@@ -112,8 +125,10 @@ public final class GamePanel extends JPanel {
             cells[r][c] = cell;
             board.add(cell);
         }
-        int width = Math.max(510, Math.min(1220, game.columns() * 40));
-        int height = Math.min(660, game.rows() * 40);
+        Dimension screen=java.awt.GraphicsEnvironment.isHeadless() ? new Dimension(1280,900)
+                : java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int width = Math.min(Math.max(280,screen.width-80),Math.max(510,game.columns()*40));
+        int height = Math.min(Math.max(160,screen.height-220),game.rows()*40);
         boardScroll.setPreferredSize(new Dimension(width, height));
         board.revalidate();
         board.repaint();
@@ -125,7 +140,36 @@ public final class GamePanel extends JPanel {
     }
 
     private void changeDifficulty() {
-        game = ((Difficulty) difficulty.getSelectedItem()).newGame();
+        if(changingSelection) return;
+        Object choice=difficulty.getSelectedItem();
+        if(!(choice instanceof Difficulty selected)) {
+            BoardSettings settings=customPrompt.get();
+            if(settings==null) {
+                selectQuietly(customSettings==null ? activeDifficulty : CUSTOM_CHOICE);
+            } else applyCustomSettings(settings);
+            return;
+        }
+        activeDifficulty=selected;
+        customSettings=null;
+        game = selected.newGame();
+        rebuildGame();
+    }
+
+    void applyCustomSettings(BoardSettings settings) {
+        java.util.Objects.requireNonNull(settings);
+        GameModel next=settings.newGame();
+        customSettings=settings;
+        game=next;
+        selectQuietly(CUSTOM_CHOICE);
+        rebuildGame();
+    }
+
+    private void selectQuietly(Object choice) {
+        changingSelection=true;
+        try {difficulty.setSelectedItem(choice);} finally {changingSelection=false;}
+    }
+
+    private void rebuildGame() {
         buildBoard();
         newGame();
         Window window = SwingUtilities.getWindowAncestor(this);
@@ -133,6 +177,35 @@ public final class GamePanel extends JPanel {
             window.pack();
             window.setLocationRelativeTo(null);
         }
+    }
+
+    private BoardSettings promptCustomSettings() {
+        javax.swing.JTextField columns=new javax.swing.JTextField(Integer.toString(game.columns()));
+        javax.swing.JTextField rows=new javax.swing.JTextField(Integer.toString(game.rows()));
+        javax.swing.JTextField mines=new javax.swing.JTextField(Integer.toString(game.mineCount()));
+        columns.setName("custom-columns"); rows.setName("custom-rows"); mines.setName("custom-mines");
+        JPanel form=new JPanel(new GridLayout(0,2,8,8));
+        addField(form,"가로 (3~40)",columns);
+        addField(form,"세로 (3~30)",rows);
+        addField(form,"지뢰 (1~전체 칸 수 - 9)",mines);
+        while(true) {
+            int result=javax.swing.JOptionPane.showOptionDialog(this,form,"사용자 지정 난이도",
+                    javax.swing.JOptionPane.OK_CANCEL_OPTION,javax.swing.JOptionPane.PLAIN_MESSAGE,
+                    null,new Object[]{"적용","취소"},"적용");
+            if(result!=0) return null;
+            try {return BoardSettings.parse(rows.getText(),columns.getText(),mines.getText());}
+            catch(IllegalArgumentException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this,ex.getMessage(),"입력 확인",javax.swing.JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    private static void addField(JPanel form,String text,javax.swing.JTextField field) {
+        JLabel label=new JLabel(text); label.setLabelFor(field); form.add(label); form.add(field);
+    }
+
+    private String recordKey() {
+        return customSettings==null ? activeDifficulty.name() : customSettings.recordKey();
     }
 
     private void openCell(int row, int column) {
@@ -147,7 +220,7 @@ public final class GamePanel extends JPanel {
             updateTime();
             timer.stop();
             if (before != GameModel.State.WON && game.state() == GameModel.State.WON) {
-                records.record((Difficulty) difficulty.getSelectedItem(), elapsedMillis());
+                records.record(recordKey(), elapsedMillis());
             }
         }
         render();
@@ -172,7 +245,7 @@ public final class GamePanel extends JPanel {
 
     private void render() {
         remaining.setText("남은 지뢰: " + game.flagsRemaining());
-        java.util.OptionalLong best = records.best((Difficulty) difficulty.getSelectedItem());
+        java.util.OptionalLong best = records.best(recordKey());
         bestTime.setText("최고 기록: " + (best.isPresent()
                 ? String.format(java.util.Locale.ROOT, "%.3f초", best.getAsLong() / 1000.0) : "없음"));
         recordNotice.setText(records.warning());

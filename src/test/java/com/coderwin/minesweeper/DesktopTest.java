@@ -18,6 +18,76 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Opt-in test that uses an actual desktop and mouse. */
 @EnabledIfSystemProperty(named="desktop.tests",matches="true")
 class DesktopTest {
+    @Test void customDialogLargeBoardAndCancel() throws Exception {
+        JFrame[] frame={null}; GamePanel[] panel={null};
+        Robot robot=new Robot(); robot.setAutoDelay(150);
+        try {
+            SwingUtilities.invokeAndWait(()->{
+                frame[0]=new JFrame("사용자 지정 검증");
+                panel[0]=new GamePanel(Difficulty.BEGINNER.newGame());
+                frame[0].setContentPane(panel[0]); frame[0].setAlwaysOnTop(true);
+                frame[0].pack(); frame[0].setLocation(40,40); frame[0].setVisible(true);
+            });
+            SwingUtilities.invokeLater(()->((JComboBox<?>)GamePanelTest.named(panel[0],"difficulty")).setSelectedItem(GamePanel.CUSTOM_CHOICE));
+            javax.swing.JDialog dialog=awaitCustomDialog();
+            SwingUtilities.invokeAndWait(dialog::toFront);
+            robot.delay(800); // Native dialog placement/animation must settle before measuring coordinates.
+            Point[] apply={null};
+            SwingUtilities.invokeAndWait(()->{
+                ((javax.swing.JTextField)GamePanelTest.named(dialog,"custom-columns")).setText("40");
+                ((javax.swing.JTextField)GamePanelTest.named(dialog,"custom-rows")).setText("30");
+                ((javax.swing.JTextField)GamePanelTest.named(dialog,"custom-mines")).setText("200");
+                JButton button=buttonWithText(dialog,"적용");
+                apply[0]=button.getLocationOnScreen(); apply[0].translate(button.getWidth()/2,button.getHeight()/2);
+            });
+            moveTo(robot,apply[0]); robot.mousePress(InputEvent.BUTTON1_DOWN_MASK); robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+            robot.waitForIdle();
+            SwingUtilities.invokeAndWait(()->{
+                assertNotNull(GamePanelTest.cell(panel[0],29,39));
+                javax.swing.JScrollPane scroll=(javax.swing.JScrollPane)GamePanelTest.named(panel[0],"board-scroll");
+                assertTrue(scroll.getHorizontalScrollBar().isVisible());
+                assertTrue(scroll.getVerticalScrollBar().isVisible());
+                ((JButton)GamePanelTest.named(panel[0],"restart")).doClick();
+                GamePanelTest.rightClick(GamePanelTest.cell(panel[0],0,0));
+            });
+            SwingUtilities.invokeLater(()->((JComboBox<?>)GamePanelTest.named(panel[0],"difficulty")).setSelectedItem(GamePanel.CUSTOM_CHOICE));
+            javax.swing.JDialog cancelDialog=awaitCustomDialog();
+            SwingUtilities.invokeAndWait(()->buttonWithText(cancelDialog,"취소").doClick());
+            robot.waitForIdle();
+            robot.delay(400); // Let the native dialog closing animation finish before capture.
+            SwingUtilities.invokeAndWait(()->assertFalse(cancelDialog.isVisible()));
+            SwingUtilities.invokeAndWait(()->assertNotNull(GamePanelTest.cell(panel[0],0,0).getIcon()));
+            java.awt.Rectangle[] bounds={null};
+            SwingUtilities.invokeAndWait(()->bounds[0]=frame[0].getBounds());
+            ImageIO.write(robot.createScreenCapture(bounds[0]),"png",Path.of("target/custom-board.png").toFile());
+        } finally {
+            SwingUtilities.invokeAndWait(()->{if(frame[0]!=null) frame[0].dispose();});
+        }
+    }
+
+    private static javax.swing.JDialog awaitCustomDialog() throws Exception {
+        javax.swing.JDialog[] found={null};
+        for(int i=0;i<100 && found[0]==null;i++) {
+            SwingUtilities.invokeAndWait(()->{
+                for(java.awt.Window window:java.awt.Window.getWindows())
+                    if(window instanceof javax.swing.JDialog dialog && dialog.isVisible() && dialog.getTitle().equals("사용자 지정 난이도")) found[0]=dialog;
+            });
+            if(found[0]==null) Thread.sleep(50);
+        }
+        assertNotNull(found[0],"Custom difficulty dialog must appear");
+        return found[0];
+    }
+
+    private static JButton buttonWithText(java.awt.Container root,String text) {
+        for(java.awt.Component component:root.getComponents()) {
+            if(component instanceof JButton button && button.getText().equals(text)) return button;
+            if(component instanceof java.awt.Container child) {
+                JButton found=buttonWithText(child,text); if(found!=null) return found;
+            }
+        }
+        return null;
+    }
+
     @Test void realMouseClicksRevealedNumber() throws Exception {
         JFrame[] frame={null};
         GameModel g=ChordTest.game();
