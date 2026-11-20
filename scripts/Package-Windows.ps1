@@ -13,10 +13,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Maven verification failed.' }
     $inputDirectory = Join-Path $projectRoot 'target\package-input'
     $outputDirectory = Join-Path $projectRoot 'target\windows'
+    $projectVersion = ([xml](Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'pom.xml'))).project.version
+    $jarName = "minesweeper-$projectVersion.jar"
+    $appVersion = $projectVersion -replace '-.*$', ''
     New-Item -ItemType Directory -Path $inputDirectory, $outputDirectory -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $projectRoot 'target\minesweeper-1.0-SNAPSHOT.jar') -Destination $inputDirectory
-    & $jpackageTool --type app-image --name Minesweeper --app-version 1.0.0 `
-        --input $inputDirectory --main-jar minesweeper-1.0-SNAPSHOT.jar `
+    Copy-Item -LiteralPath (Join-Path $projectRoot "target\$jarName") -Destination $inputDirectory
+    & $jpackageTool --type app-image --name Minesweeper --app-version $appVersion `
+        --input $inputDirectory --main-jar $jarName `
         --main-class com.coderwin.minesweeper.MinesweeperApp --dest $outputDirectory `
         --add-modules java.desktop --jlink-options '--strip-debug --no-man-pages --no-header-files' `
         --java-options '-Dfile.encoding=UTF-8' --vendor coderwin
