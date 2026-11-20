@@ -2,6 +2,10 @@
 
 Java Swing으로 만드는 PC용 지뢰찾기 게임 프로젝트입니다.
 
+Windows x64 배포본: [v1.0.0 다운로드](https://github.com/coderwin/minesweeper/releases/tag/v1.0.0).
+릴리스의 ZIP을 모두 압축 해제하고 `Minesweeper.exe`를 실행하면 됩니다.
+첨부된 `SHA256SUMS.txt`로 파일의 SHA-256을 확인할 수 있습니다.
+
 ## 프로젝트 상태
 
 초급·중급·고급 난이도를 지원하는 Java Swing 게임을 구현했습니다.
