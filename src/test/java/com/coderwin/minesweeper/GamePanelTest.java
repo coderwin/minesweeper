@@ -34,7 +34,8 @@ class GamePanelTest {
             GameModel g=new GameModel(9,9,10,new Random(42));
             GamePanel p=new GamePanel(g);
             rightClick(cell(p,0,0));
-            assertEquals("F",cell(p,0,0).getText());
+            assertNotNull(cell(p,0,0).getIcon());
+            assertTrue(cell(p,0,0).getAccessibleContext().getAccessibleName().contains("깃발"));
             assertEquals("남은 지뢰: 9",((JLabel)named(p,"remaining")).getText());
             cell(p,0,0).doClick();
             assertEquals(GameModel.State.READY,g.state());

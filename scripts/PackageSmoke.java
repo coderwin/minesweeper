@@ -54,7 +54,7 @@ public final class PackageSmoke {
                 JButton flagged=cell(panel,0,0);
                 flagged.dispatchEvent(new MouseEvent(flagged,MouseEvent.MOUSE_PRESSED,System.currentTimeMillis(),
                         MouseEvent.BUTTON3_DOWN_MASK,5,5,1,true,MouseEvent.BUTTON3));
-                require(flagged.getText().equals("F"),"Flag input");
+                require(flagged.getIcon()!=null && flagged.getAccessibleContext().getAccessibleName().contains("깃발"),"Flag input");
                 ((JButton)named(panel,"restart")).doClick();
                 require(game.state()==GameModel.State.READY && game.flagsRemaining()==10,"Restart");
                 cell(panel,4,4).doClick();

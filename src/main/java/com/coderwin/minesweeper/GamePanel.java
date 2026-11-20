@@ -95,11 +95,17 @@ public final class GamePanel extends JPanel {
             cell.setMargin(new java.awt.Insets(0, 0, 0, 0));
             cell.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
             cell.addActionListener(e -> openCell(row, column));
+            cell.getInputMap(javax.swing.JComponent.WHEN_FOCUSED).put(javax.swing.KeyStroke.getKeyStroke("F"),"toggleFlag");
+            cell.getActionMap().put("toggleFlag",new javax.swing.AbstractAction() {
+                @Override public void actionPerformed(java.awt.event.ActionEvent event) {
+                    toggleFlag(row,column);
+                }
+            });
             cell.addMouseListener(new MouseAdapter() {
                 @Override public void mousePressed(MouseEvent e) {
+                    if(cell.isEnabled()) cell.requestFocusInWindow();
                     if (SwingUtilities.isRightMouseButton(e)) {
-                        game.toggleFlag(row, column);
-                        render();
+                        toggleFlag(row,column);
                     }
                 }
             });
@@ -111,6 +117,11 @@ public final class GamePanel extends JPanel {
         boardScroll.setPreferredSize(new Dimension(width, height));
         board.revalidate();
         board.repaint();
+    }
+
+    private void toggleFlag(int row,int column) {
+        game.toggleFlag(row,column);
+        render();
     }
 
     private void changeDifficulty() {
@@ -166,8 +177,8 @@ public final class GamePanel extends JPanel {
                 ? String.format(java.util.Locale.ROOT, "%.3f초", best.getAsLong() / 1000.0) : "없음"));
         recordNotice.setText(records.warning());
         status.setText(switch (game.state()) {
-            case READY -> "왼쪽 클릭: 열기 · 오른쪽 클릭: 깃발";
-            case PLAYING -> "숫자 클릭: 주변 칸 열기 · 오른쪽 클릭: 깃발";
+            case READY -> "왼쪽 클릭: 열기 · 오른쪽 클릭 / F 키: 깃발";
+            case PLAYING -> "숫자 클릭: 주변 칸 열기 · 오른쪽 클릭 / F 키: 깃발";
             case WON -> "승리! 모든 안전한 칸을 열었습니다.";
             case LOST -> "패배! 지뢰를 밟았습니다. 새 게임으로 도전하세요.";
         });
@@ -175,15 +186,19 @@ public final class GamePanel extends JPanel {
             JButton cell = cells[r][c];
             boolean open = game.isRevealed(r, c);
             boolean showMine = game.isFinished() && game.isMine(r, c);
-            String text = showMine ? "*" : game.isFlagged(r, c) ? "F"
-                    : open && game.adjacentMines(r, c) > 0 ? Integer.toString(game.adjacentMines(r, c)) : "";
+            String text = !showMine && !game.isFlagged(r,c) && open && game.adjacentMines(r,c)>0
+                    ? Integer.toString(game.adjacentMines(r,c)) : "";
             cell.setText(text);
+            javax.swing.Icon icon=showMine ? CellIcon.MINE : game.isFlagged(r,c) ? CellIcon.FLAG : null;
+            cell.setIcon(icon);
+            cell.setDisabledIcon(icon);
             cell.setForeground(showMine ? new Color(155, 20, 20) : game.isFlagged(r, c)
                     ? new Color(160, 65, 10) : NUMBER_COLORS[game.adjacentMines(r, c)]);
             cell.setBackground(showMine ? new Color(255, 180, 180) : open ? new Color(230, 235, 240) : new Color(190, 205, 220));
             cell.setEnabled(!game.isFinished() && (!open || game.adjacentMines(r, c) > 0));
             String description = showMine ? "지뢰" : game.isFlagged(r, c) ? "깃발" : open ? "열림, 주변 지뢰 " + game.adjacentMines(r, c) : "닫힘";
             cell.getAccessibleContext().setAccessibleName((r + 1) + "행 " + (c + 1) + "열 " + description);
+            cell.setToolTipText(description + " · F 키: 깃발 표시/해제");
         }
     }
 
